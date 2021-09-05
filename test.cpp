@@ -4,8 +4,8 @@
 int main(int argc, char* argv[]){
     if (argc < 2) return 1;
     Img bitmap(argv[1]);
-    bitmap.index(false);
     bitmap.print();
+    bitmap.index(false);
     for (uint i=0; i<bitmap.size(); i++){
         /*cout << "Pixel: " << dec << i+1 << " of " << bitmap.size() << endl;
         cout << "\tR: 0x" << hex << bitmap.red(i);

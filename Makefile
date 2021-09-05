@@ -10,11 +10,11 @@ OBJECTS = $(shell ls $(BINARIES)/*.o 2> /dev/null)
 
 FLAGS += -I$(INCLUDES)
 
-test: test.cpp $(OBJECTS) $(HEADERS)
+test: test.cpp bin/Img.o $(HEADERS)
 	g++ $(FLAGS) -o $@ $< $(OBJECTS)
 
 bin/Img.o: source/Img.cpp $(HEADERS)
 	g++ $(FLAGS) -c -o bin/Img.o source/Img.cpp
 
 clean:
-	-@ rm bin/* 2>/dev/null || true
+	-@ rm test bin/* 2>/dev/null || true
