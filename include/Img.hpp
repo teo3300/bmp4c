@@ -14,7 +14,7 @@ using namespace std;
 class Img {
     struct{
         u16 entries[PALETTE_SIZE];
-        u8 curr;
+        u16 curr;
         uint size;
     }Palette;
     struct{
@@ -44,7 +44,7 @@ class Img {
 public:
     Img(string fileName);
     ~Img();
-    void index(bool indexTransparent);
+    void index();
     void print();
     inline u16 paletteEntry(uint x) {return Palette.entries[x];};
     inline u16 pixel(uint i){return Canvas.entries[i];}

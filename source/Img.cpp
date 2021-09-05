@@ -14,7 +14,7 @@ Img::Img(string fileName) {
     Meta.file_name = fileName;
     Meta.error = CANVAS_ALLOC_ERROR | HASHTAB_ALLOC_ERROR;
     Palette.curr = 1;
-    Palette.entries[0] = 0x0000;
+    Palette.entries[0] = 0x7fff;
     Palette.size = PALETTE_SIZE;
     HashTab.size = HASHTAB_SIZE;
     HashTab.indexTransparent = false;
@@ -100,7 +100,7 @@ uint Img::probeHash(u16 color){
     uint base_pos = colorHash(color);
     uint final_pos = base_pos;
     for(uint i=0; i<HashTab.size; i++){
-        final_pos = (base_pos + ((i+i*i)>>1))%HashTab.size;
+        final_pos = (base_pos + ((i+i*i)>>1))&HASHTAB_MASK;
         if(Palette.entries[HashTab.entries[final_pos]] == color || HashTab.entries[final_pos] == EMPTY){
             return final_pos;
         }
@@ -115,26 +115,26 @@ uint Img::colorHash(u16 color){
     return ret;
 }
 
-void Img::index(bool indexTransparent){
+void Img::index(){
     memset(HashTab.entries, EMPTY, HashTab.size);
     for (uint i=0; i<Canvas.size; i++){
-        if((!transparent(i)) || indexTransparent){
+        if((!transparent(i))){
             uint buck = probeHash(Canvas.entries[i]);
             if(!(buck < HashTab.size)) {Meta.error |= PALETTE_ERROR; return;}
             if(HashTab.entries[buck] == EMPTY){
                 if(!paletteAvail()) {Meta.error |= PALETTE_ERROR; return;}
                 Palette.entries[Palette.curr] = Canvas.entries[i];
-                HashTab.entries[buck] = Palette.curr;
+                HashTab.entries[buck] = (u8)Palette.curr;
                 Palette.curr++;
             }
             Canvas.entries[i] = HashTab.entries[buck];
-        } else Canvas.entries[i] = EMPTY;
+        } else Canvas.entries[i] = 0x00;
     }
 }
 
 void Img::print(){
     cout << Meta.file_name << ": " << endl;
-    cout << "\tpixel size: " << Canvas.width << "*" << Canvas.height << " - " << Canvas.size << endl;
+    cout << "\tpixel size: " << dec << Canvas.width << "*" << Canvas.height << " - " << Canvas.size << endl;
     cout << "\timage size: " << Meta.img_size << endl;
     cout << "\tdata offset: 0x" << hex << Canvas.offset << dec << endl;
     cout << "\tfile size: " << Meta.file_size << endl;

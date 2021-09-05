@@ -13,6 +13,8 @@
 #define GREEN(COLOR)    ((COLOR & MASK(GREEN))>>GREEN_SHIFT)
 #define BLUE(COLOR)     ((COLOR & MASK(BLUE))>>BLUE_SHIFT)
 
+#define HASHTAB_MASK    0x1ff
+
 // both colors are not possible due to clear bit[15] (when bit[15] is clear, color must be 0x7fff)
 #define EMPTY           0x00
 
