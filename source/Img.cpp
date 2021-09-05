@@ -17,7 +17,7 @@ Img::Img(string fileName) {
     Palette.entries[0] = 0x7fff;
     Palette.size = PALETTE_SIZE;
     HashTab.size = HASHTAB_SIZE;
-    HashTab.indexTransparent = false;
+    Meta.index = false;
 
     // Reading file header
 
@@ -109,13 +109,14 @@ uint Img::probeHash(u16 color){
 }
 
 uint Img::colorHash(u16 color){
-    uint ret =  RED(color);
-    ret     ^= (GREEN(color)<<3);
-    ret     ^= ((BLUE(color)<<6) | (BLUE(color)>>3)) &  0x1ff;
+    uint ret =  GREEN(color);
+    ret     ^= (BLUE(color)<<3);
+    ret     ^= ((RED(color)<<6) | (RED(color)>>3)) &  0x1ff;
     return ret;
 }
 
 void Img::index(){
+    if(Meta.index){return;}
     memset(HashTab.entries, EMPTY, HashTab.size);
     for (uint i=0; i<Canvas.size; i++){
         if((!transparent(i))){
@@ -130,6 +131,7 @@ void Img::index(){
             Canvas.entries[i] = HashTab.entries[buck];
         } else Canvas.entries[i] = 0x00;
     }
+    Meta.index = true;
 }
 
 void Img::print(){

@@ -20,7 +20,6 @@ class Img {
     struct{
         u8* entries;
         uint size;
-        uint indexTransparent;
     }HashTab;
     struct{
         uint offset;
@@ -37,6 +36,7 @@ class Img {
         u16  bit_depth;
         bool bottom_up;
         uint compression;
+        uint index;
         string file_name;
     }Meta;
     uint probeHash(u16 color);

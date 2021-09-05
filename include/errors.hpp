@@ -28,5 +28,4 @@
 #define PARSING_DATA_ERROR          SET(10)
 // no available space in palette
 #define PALETTE_ERROR               SET(11)
-
 #endif
