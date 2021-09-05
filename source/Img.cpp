@@ -10,6 +10,8 @@
 #define ERROR(CODE) Meta.error |= (CODE); input_file.close(); return
 #define CLEAR(CODE) Meta.error &= (~(CODE))
 
+#define HASHTAB_MASK    (HASHTAB_SIZE-1)
+
 Img::Img(string fileName) {
     Meta.file_name = fileName;
     Meta.error = CANVAS_ALLOC_ERROR | HASHTAB_ALLOC_ERROR;
@@ -100,10 +102,12 @@ uint Img::probeHash(u16 color){
     uint base_pos = colorHash(color);
     uint final_pos = base_pos;
     for(uint i=0; i<HashTab.size; i++){
-        final_pos = (base_pos + ((i+i*i)>>1))&HASHTAB_MASK;
+        final_pos = (base_pos + ((i+i*i)>>1))&HASHTAB_MASK;   // quad probe
+        //final_pos = (base_pos + i)&HASHTAB_MASK;              // linear probing
         if(Palette.entries[HashTab.entries[final_pos]] == color || HashTab.entries[final_pos] == EMPTY){
             return final_pos;
         }
+        Meta.error += 0x10000;
     }
     return HashTab.size; // out of bound
 }
@@ -111,7 +115,7 @@ uint Img::probeHash(u16 color){
 uint Img::colorHash(u16 color){
     uint ret =  GREEN(color);
     ret     ^= (BLUE(color)<<3);
-    ret     ^= ((RED(color)<<6) | (RED(color)>>3)) &  0x1ff;
+    ret     ^= ((RED(color)<<6) | (RED(color)>>3)) &  HASHTAB_MASK;
     return ret;
 }
 

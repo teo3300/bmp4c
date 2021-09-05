@@ -58,7 +58,7 @@ public:
     inline uint paletteMaxSize() {return Palette.size;};
     inline uint paletteSize() {return Palette.curr;};
     inline uint paletteAvail() {return Palette.size - Palette.curr;};
-    inline u64  error() {return Meta.error;};
+    inline u64  error() {return Meta.error&0xffff;};
 
     // testing
     inline uint askHash(u16 color){return colorHash(color);};
