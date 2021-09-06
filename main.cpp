@@ -1,6 +1,5 @@
 #include "helper.hpp"
 #include <iostream>
-#include <filesystem>
 #include <cstdlib>
 #include <fstream>
 #include <string>
@@ -23,7 +22,7 @@ int main(int argc, char* argv[]){
     bool split = false;
     int hSplit = -1;
     int vSplit = -1;
-    int bitdepth = 16;
+    int bitDepth = 16;
     
     for(int i=0; i< argc; i++){
         cout << argv[i] << " ";
@@ -39,6 +38,7 @@ int main(int argc, char* argv[]){
         case 6:
             if(string(SPLIT).compare("s")){
                 cerr << "ERROR: unknown split command" << endl;
+                return 1;
             }
             split=true;
             hSplit = atoi(H_SPLIT);
@@ -46,9 +46,10 @@ int main(int argc, char* argv[]){
                 cout << "WARNING: hSplit > " << REC_HSPLIT << ", this format is not commonly used" << endl;
             }
         case 4:
-            bitdepth = atoi(INDEX_FORM);
-            if(bitdepth != 4 || bitdepth!= 8 || bitdepth!= 16){
-                cout << "ERROR: impossible to generate image with a bitdepth of " << bitdepth << endl;
+            bitDepth = atoi(INDEX_FORM);
+            if(bitDepth != 4 && bitDepth!= 8 && bitDepth!= 16){
+                cout << "ERROR: impossible to generate an image with a bitdepth of " << bitDepth << endl;
+                return 1;
             }
         case 3:
             if(!file_exists(IFNAME)){
@@ -77,7 +78,7 @@ int main(int argc, char* argv[]){
             printHelper();
             return 1;
     }
-    cout << dec << "split: " << split << "\thSplit: " << hSplit << "\tvSplit: " << vSplit << endl;
+    cout << dec << "split: " << split << "\thSplit: " << hSplit << "\tvSplit: " << vSplit << "\tbitDepth: " << bitDepth << endl;
 
     return 0;
 }

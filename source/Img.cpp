@@ -17,7 +17,7 @@ Img::Img(string fileName) {
     Meta.error = CANVAS_ALLOC_ERROR | HASHTAB_ALLOC_ERROR;
     Palette.curr = 1;
     Palette.entries[0] = 0x7fff;
-    Palette.size = MAX_PALETTE_SIZE;
+    Palette.size = 0;
     HashTab.size = MAX_HASHTAB_SIZE;
     Meta.index = false;
 
