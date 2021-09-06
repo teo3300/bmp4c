@@ -12,6 +12,15 @@
 
 #define HASHTAB_MASK    (MAX_HASHTAB_SIZE-1)
 
+#define COLORHASH(color) ((u16)( (GREEN(color) ^ (BLUE(color)<<3) ^ ((RED(color)<<6) | (RED(color)>>3)))&HASHTAB_MASK ))
+
+u16 Img::colorHash(u16 color){
+    u16 ret =  GREEN(color);
+    ret     ^= (u16)(BLUE(color)<<3);
+    ret     ^= (u16)(((RED(color)<<6) | (RED(color)>>3)) &  HASHTAB_MASK);
+    return ret;
+}
+
 Img::Img(string fileName) {
     Meta.file_name = fileName;
     Meta.error = CANVAS_ALLOC_ERROR | HASHTAB_ALLOC_ERROR;
@@ -98,11 +107,10 @@ Img::~Img(){
     }
 }
 
-uint Img::probeHash(u16 color){
-    uint base_pos = colorHash(color);
-    uint final_pos = base_pos;
+u16 Img::probeHash(u16 color){
+    u16 base_pos = COLORHASH(color);
     for(uint i=0; i<HashTab.size; i++){
-        final_pos = (base_pos + ((i+i*i)>>1))&HASHTAB_MASK;   // quad probe
+        u16 final_pos = (base_pos + ((i+i*i)>>1))&HASHTAB_MASK;   // quad probe
         //final_pos = (base_pos + i)&HASHTAB_MASK;              // linear probing
         if(Palette.entries[HashTab.entries[final_pos]] == color || HashTab.entries[final_pos] == EMPTY){
             return final_pos;
@@ -110,13 +118,6 @@ uint Img::probeHash(u16 color){
         Meta.error += 0x10000;
     }
     return HashTab.size; // out of bound
-}
-
-uint Img::colorHash(u16 color){
-    uint ret =  GREEN(color);
-    ret     ^= (BLUE(color)<<3);
-    ret     ^= ((RED(color)<<6) | (RED(color)>>3)) &  HASHTAB_MASK;
-    return ret;
 }
 
 void Img::index(uint palette_size){
@@ -151,5 +152,10 @@ void Img::print(){
     cout << "\theader size: " << Meta.info_header_size << endl;
     cout << "\tpalette size: " << Palette.size << endl;
     cout << "\thashtab size: " << HashTab.size << endl;
-    cout << "\terror: " << hex << Meta.error << endl << endl;
+    cout << "\terror: 0x" << hex << Meta.error << endl << endl;
+}
+
+
+u16 askHash(u16 color){
+    return COLORHASH(color);
 }

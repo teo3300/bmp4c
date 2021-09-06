@@ -5,7 +5,7 @@ int main(int argc, char* argv[]){
     if (argc < 2) return 1;
     Img bitmap (argv[1]);
     Img bitmap2 (argv[1]);
-    bitmap.index(SMALL_PALETTE);
+    bitmap.index(FULL_PALETTE);
     if(bitmap.error() || bitmap2.error()) return 1;
     bitmap.print();
     bitmap2.print();

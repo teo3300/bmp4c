@@ -24,3 +24,5 @@ bin/helper.o: source/helper.cpp $(HEADERS)
 
 clean:
 	-@ rm test main bin/* 2>/dev/null || true
+
+all: main test

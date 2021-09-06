@@ -19,7 +19,7 @@ class Img {
     }Palette;
     struct{
         u8* entries;
-        uint size;
+        u16 size;
     }HashTab;
     struct{
         uint offset;
@@ -40,8 +40,8 @@ class Img {
         uint bit_index;
         string file_name;
     }Meta;
-    uint probeHash(u16 color);
-    uint colorHash(u16 color);
+    u16 probeHash(u16 color);
+    u16 colorHash(u16 color);
 public:
     Img(string fileName);
     ~Img();
@@ -62,7 +62,7 @@ public:
     inline u64  error() {return Meta.error&0xffff;};
 
     // testing
-    inline uint askHash(u16 color){return colorHash(color);};
+    u16 askHash(u16 color);
 };
 
 #endif
