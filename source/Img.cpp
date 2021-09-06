@@ -10,15 +10,15 @@
 #define ERROR(CODE) Meta.error |= (CODE); input_file.close(); return
 #define CLEAR(CODE) Meta.error &= (~(CODE))
 
-#define HASHTAB_MASK    (HASHTAB_SIZE-1)
+#define HASHTAB_MASK    (MAX_HASHTAB_SIZE-1)
 
 Img::Img(string fileName) {
     Meta.file_name = fileName;
     Meta.error = CANVAS_ALLOC_ERROR | HASHTAB_ALLOC_ERROR;
     Palette.curr = 1;
     Palette.entries[0] = 0x7fff;
-    Palette.size = PALETTE_SIZE;
-    HashTab.size = HASHTAB_SIZE;
+    Palette.size = MAX_PALETTE_SIZE;
+    HashTab.size = MAX_HASHTAB_SIZE;
     Meta.index = false;
 
     // Reading file header
@@ -119,8 +119,9 @@ uint Img::colorHash(u16 color){
     return ret;
 }
 
-void Img::index(){
+void Img::index(uint palette_size){
     if(Meta.index){return;}
+    Palette.size = palette_size;
     memset(HashTab.entries, EMPTY, HashTab.size);
     for (uint i=0; i<Canvas.size; i++){
         if((!transparent(i))){

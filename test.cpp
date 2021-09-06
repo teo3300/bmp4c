@@ -5,7 +5,7 @@ int main(int argc, char* argv[]){
     if (argc < 2) return 1;
     Img bitmap (argv[1]);
     if(bitmap.error()) return 1;
-    bitmap.index();
+    bitmap.index(FULL_PALETTE);
     bitmap.print();
     //for (uint i=0; i<bitmap.size(); i++){
         /*cout << "Pixel: " << dec << i+1 << " of " << bitmap.size() << endl;
@@ -22,4 +22,5 @@ int main(int argc, char* argv[]){
         cout << "0x" << bitmap.paletteEntry(i) << (((i+1)%5) ? "\t" : "\n");
     }
     cout << endl;*/
+    
 }

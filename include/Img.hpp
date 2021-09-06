@@ -13,7 +13,7 @@ using namespace std;
 
 class Img {
     struct{
-        u16 entries[PALETTE_SIZE];
+        u16 entries[MAX_PALETTE_SIZE];
         u16 curr;
         uint size;
     }Palette;
@@ -37,6 +37,7 @@ class Img {
         bool bottom_up;
         uint compression;
         uint index;
+        uint bit_index;
         string file_name;
     }Meta;
     uint probeHash(u16 color);
@@ -44,7 +45,7 @@ class Img {
 public:
     Img(string fileName);
     ~Img();
-    void index();
+    void index(uint palette_size);
     void print();
     inline u16 paletteEntry(uint x) {return Palette.entries[x];};
     inline u16 pixel(uint i){return Canvas.entries[i];}
