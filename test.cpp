@@ -9,8 +9,10 @@ int main(int argc, char* argv[]){
     if (argc < 2) return 1;
     Img bitmap (argv[1]);
     Img bitmap2 (argv[1]);
+    bitmap.print();
     if(bitmap.error() || bitmap2.error()) return 1;
     bitmap.index(FULL_PALETTE);
+    bitmap.print();
     if(bitmap.error()) return 1;
     cout << "checking data loss: " << endl;
     uint pixel_lost = 0;
@@ -23,6 +25,7 @@ int main(int argc, char* argv[]){
     cout << dec << pixel_lost << " pixels lost" << endl;
     cout << "sizeof(ChunkLine): " << sizeof(ChunkLine) << ", must be " << 8*sizeof(u16) << endl << endl;
     bitmap.split(0, 0);
+    bitmap.print();
     if(bitmap.error()) {bitmap.print(); return 1;}
     //bitmap.print();
     //bitmap2.print();
@@ -39,5 +42,4 @@ int main(int argc, char* argv[]){
     //cout << endl << dec << "Palette entries available: " << bitmap.paletteAvail() << hex << endl << "Palette entries used: " << endl;
     //for(uint i=0; i<bitmap.paletteSize(); i++) {cout << "0x" << bitmap.paletteEntry(i) << (((i+1)%8) ? "\t" : "\n");}
     //cout << endl;
-    
 }

@@ -107,7 +107,7 @@ Img::Img(string fileName) {
 Img::~Img(){
     if(!OCCURRED(CANVAS_ALLOC_ERROR)){
         delete[] Canvas.entries;
-    } else if(!OCCURRED(HASHTAB_ALLOC_ERROR)){
+    } if(!OCCURRED(HASHTAB_ALLOC_ERROR)){
         delete[] HashTab.entries;
     }
 }
