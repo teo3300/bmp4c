@@ -1,6 +1,7 @@
 #include "Img.hpp"
+#include "cyntax.hpp"
+#include "errors.hpp"
 #include <cstring>
-#include <errors.hpp>
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -148,22 +149,37 @@ void Img::split(uint width, uint height){
     if(Meta.split) return; 
     if(!height) {if(!width) height = width = 1; else height = width;}
     if(!width) {Meta.error = ILLEGAL_SPLIT_REQ_ERROR; return;}
-    if(((Canvas.width / width) & 0x7) || ((Canvas.height / height) & 0x7)){
+    if((Canvas.height % (width<<3)) || (Canvas.height % (height<<3))){
         Meta.error = SPLIT_ALIGN_ERROR;
         return;
     }
-    uint buff_pos = 0;
-    uint v_step = Canvas.width<<LINE_SHIFT;
-    ChunkLine* line_buffer = new ChunkLine[Canvas.size>>LINE_SHIFT];
-    for(uint i=0; i < Canvas.size; i+=v_step){                                      // hopefully it's equal to i++, j++, l++ and
-        for(uint j=0; j< Canvas.width; j+=LINE_SIZE){                               // [chunk_width * l + chunk_width*(i<<3) + j]
-            for(uint l=0; l<v_step; l+=Canvas.width, buff_pos += LINE_SIZE){
-                std::memcpy(&line_buffer[buff_pos], &Canvas.entries[i+j+l], sizeof(ChunkLine));
-            }
-        }
-    }
     
     // phase 1: convert from array of pixels to array of chunks
+    uint buff_pos = 0;
+    uint line_buff_width = Canvas.width>>LINE_SHIFT;
+    uint line_buff_size = Canvas.size>>LINE_SHIFT;
+    uint v_step = Canvas.width;
+    // /\ ok
+    ChunkLine   *line_canvas =    (ChunkLine*)Canvas.entries,
+                *line_buffer = new ChunkLine[line_buff_size];
+    for(uint i=0; i<line_buff_size; i+=v_step)                                      // hopefully it's equal to i++, j++, l++ and
+        for(uint j=0; j<line_buff_width; j++)                              // [chunk_width * l + chunk_width*(i<<3) + j]
+            for(uint l=0; l<v_step; l+=line_buff_width, buff_pos++)
+                memcpy(&line_buffer[buff_pos], &line_canvas[i+j+l], sizeof(ChunkLine));
+
+    // phase 2: rearrange chunks following split criteria
+    uint chunk_buff_width = line_buff_width;
+    uint chunk_buff_size = Canvas.size>>CHUNK_SHIFT;
+    v_step = chunk_buff_width*height;
+    buff_pos = 0;
+    Chunk   *chunk_canvas = (Chunk*)Canvas.entries,
+            *chunk_buffer = (Chunk*)line_buffer;
+    for(uint i=0; i<chunk_buff_size; i+=v_step)
+        for(uint j=0; j<chunk_buff_width; j+=width)
+            for(uint r=0; r<v_step; r+=chunk_buff_width)
+                for(uint c=0; c<width; c++, buff_pos++)
+                    memcpy(&chunk_canvas[buff_pos], &chunk_buffer[i+j+r+c], sizeof(Chunk));
+
     delete[] line_buffer;
     Meta.split = true;
 }
