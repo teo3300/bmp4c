@@ -6,12 +6,14 @@
 #include <iterator>
 #include <type_traits>
 
+typedef u16 ChunkLine[LINE_SIZE];
+typedef u16 Chunk[CHUNK_SIZE];
+
 #define OCCURRED(ERROR) (Meta.error & ERROR)
 #define ERROR(CODE) Meta.error |= (CODE); input_file.close(); return
 #define CLEAR(CODE) Meta.error &= (~(CODE))
 
 #define HASHTAB_MASK    (MAX_HASHTAB_SIZE-1)
-
 #define COLORHASH(color) ((u16)( (GREEN(color) ^ (BLUE(color)<<3) ^ ((RED(color)<<6) | (RED(color)>>3)))&HASHTAB_MASK ))
 
 u16 Img::colorHash(u16 color){
@@ -23,12 +25,14 @@ u16 Img::colorHash(u16 color){
 
 Img::Img(string fileName) {
     Meta.file_name = fileName;
+    Meta.index = false;
+    Meta.split = false;
     Meta.error = CANVAS_ALLOC_ERROR | HASHTAB_ALLOC_ERROR;
     Palette.curr = 1;
     Palette.entries[0] = 0x7fff;
     Palette.size = 0;
+    HashTab.collisions = 0;
     HashTab.size = MAX_HASHTAB_SIZE;
-    Meta.index = false;
 
     // Reading file header
 
@@ -115,13 +119,13 @@ u16 Img::probeHash(u16 color){
         if(Palette.entries[HashTab.entries[final_pos]] == color || HashTab.entries[final_pos] == EMPTY){
             return final_pos;
         }
-        Meta.error += 0x10000;
+        HashTab.collisions ++;
     }
     return HashTab.size; // out of bound
 }
 
 void Img::index(uint palette_size){
-    if(Meta.index){return;}
+    if(Meta.index) return;
     Palette.size = palette_size;
     memset(HashTab.entries, EMPTY, HashTab.size);
     for (uint i=0; i<Canvas.size; i++){
@@ -140,6 +144,30 @@ void Img::index(uint palette_size){
     Meta.index = true;
 }
 
+void Img::split(uint width, uint height){
+    if(Meta.split) return; 
+    if(!height) {if(!width) height = width = 1; else height = width;}
+    if(!width) {Meta.error = ILLEGAL_SPLIT_REQ_ERROR; return;}
+    if(((Canvas.width / width) & 0x7) || ((Canvas.height / height) & 0x7)){
+        Meta.error = SPLIT_ALIGN_ERROR;
+        return;
+    }
+    uint buff_pos = 0;
+    uint v_step = Canvas.width<<LINE_SHIFT;
+    ChunkLine* line_buffer = new ChunkLine[Canvas.size>>LINE_SHIFT];
+    for(uint i=0; i < Canvas.size; i+=v_step){                                      // hopefully it's equal to i++, j++, l++ and
+        for(uint j=0; j< Canvas.width; j+=LINE_SIZE){                               // [chunk_width * l + chunk_width*(i<<3) + j]
+            for(uint l=0; l<v_step; l+=Canvas.width, buff_pos += LINE_SIZE){
+                std::memcpy(&line_buffer[buff_pos], &Canvas.entries[i+j+l], sizeof(ChunkLine));
+            }
+        }
+    }
+    
+    // phase 1: convert from array of pixels to array of chunks
+    delete[] line_buffer;
+    Meta.split = true;
+}
+
 void Img::print(){
     cout << Meta.file_name << ": " << endl;
     cout << "\tpixel size: " << dec << Canvas.width << "*" << Canvas.height << " - " << Canvas.size << endl;
@@ -152,6 +180,7 @@ void Img::print(){
     cout << "\theader size: " << Meta.info_header_size << endl;
     cout << "\tpalette size: " << Palette.size << endl;
     cout << "\thashtab size: " << HashTab.size << endl;
+    cout << "\thashtab collisions: " << HashTab.collisions << endl;
     cout << "\terror: 0x" << hex << Meta.error << endl << endl;
 }
 

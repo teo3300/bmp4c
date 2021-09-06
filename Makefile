@@ -13,8 +13,8 @@ FLAGS += -I$(INCLUDES)
 test: test.cpp bin/Img.o $(HEADERS)
 	g++ $(FLAGS) -o $@ $< bin/Img.o
 
-main: main.cpp bin/helper.o $(HEADERS)
-	g++ $(FLAGS) -o $@ $< bin/helper.o
+main: main.cpp bin/Img.o bin/helper.o $(HEADERS)
+	g++ $(FLAGS) -o $@ $< bin/Img.o bin/helper.o 
 
 bin/Img.o: source/Img.cpp $(HEADERS)
 	g++ $(FLAGS) -c -o bin/Img.o source/Img.cpp

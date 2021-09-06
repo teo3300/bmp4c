@@ -28,4 +28,8 @@
 #define PARSING_DATA_ERROR          SET(10)
 // no available space in palette
 #define PALETTE_ERROR               SET(11)
+// splitsize is illegal (w==0, h!=0)
+#define ILLEGAL_SPLIT_REQ_ERROR     SET(12)
+// impossible to split image with the requested size preserving 8*8 chunks
+#define SPLIT_ALIGN_ERROR           SET(13)
 #endif

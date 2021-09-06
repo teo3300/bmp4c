@@ -18,6 +18,7 @@ class Img {
         uint size;
     }Palette;
     struct{
+        uint collisions;
         u8* entries;
         u16 size;
     }HashTab;
@@ -27,6 +28,7 @@ class Img {
         sint height;
         uint size;
         u16* entries;
+        u8*  index;
     }Canvas;
     struct{
         uint error;
@@ -37,6 +39,7 @@ class Img {
         bool bottom_up;
         uint compression;
         uint index;
+        bool split;
         uint bit_index;
         string file_name;
     }Meta;
@@ -46,6 +49,7 @@ public:
     Img(string fileName);
     ~Img();
     void index(uint palette_size);
+    void split(uint width, uint height);
     void print();
     inline u16 paletteEntry(uint x) {return Palette.entries[x];};
     inline u16 pixel(uint i){return Canvas.entries[i];}
@@ -59,7 +63,7 @@ public:
     inline uint paletteMaxSize() {return Palette.size;};
     inline uint paletteSize() {return Palette.curr;};
     inline uint paletteAvail() {return Palette.size - Palette.curr;};
-    inline u64  error() {return Meta.error&0xffff;};
+    inline u64  error() {return Meta.error;};
 
     // testing
     u16 askHash(u16 color);

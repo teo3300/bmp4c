@@ -10,6 +10,11 @@
 #define FULL_PALETTE    MAX_PALETTE_SIZE
 #define SMALL_PALETTE   16
 
+#define LINE_SHIFT 3
+#define LINE_SIZE  (1<<LINE_SHIFT)
+#define CHUNK_SHIFT (LINE_SHIFT<<1)
+#define CHUNK_SIZE (1<<CHUNK_SHIFT)
+
 #define u8  unsigned char
 #define u16 unsigned short  int
 #define u32 unsigned        int
