@@ -22,11 +22,6 @@ int main(int argc, char* argv[]){
     uint hSplit = 0;
     uint vSplit = 0;
     int bitDepth = 16;
-    
-    for(int i=0; i< argc; i++){
-        cout << argv[i] << " ";
-    }
-    cout << endl;
 
     switch (argc) {
         case 7:
@@ -75,6 +70,7 @@ int main(int argc, char* argv[]){
                 if(!src.good()) {return 1; cerr << "ERROR: could not create backup file" << endl;}
                 ofstream dst(backup_file_name, ios::binary);
                 if(!dst.good()) {return 1; cerr << "ERROR: could not create backup file" << endl;}
+                dst << src.rdbuf();
             } if (!ofstream(OFNAME).good()){
                 cout << "ERROR: unable to open file <" << OFNAME << ">" << endl;
                 return 1;
@@ -86,16 +82,17 @@ int main(int argc, char* argv[]){
     }
 
     Img image(IFNAME);
-    if(image.error()) {cerr << "Error occurred: 0x" << hex << image.error(); return 1;}
+    if(image.error()) {cerr << "Error occurred: 0x" << hex << image.error() << endl; return 1;}
     if(bitDepth == 8){
         image.index(FULL_PALETTE);
     } else if (bitDepth == 4){
         image.index(SMALL_PALETTE);
     }
-    if(image.error()) {cerr << "Error occurred: 0x" << hex << image.error(); return 1;}
+    if(image.error()) {cerr << "Error occurred: 0x" << hex << image.error() << endl; return 1;}
     if(split) image.split(hSplit, vSplit);
-    if(image.error()) {cerr << "Error occurred: 0x" << hex << image.error(); return 1;}
-
+    if(image.error()) {cerr << "Error occurred: 0x" << hex << image.error() << endl; return 1;}
+    image.print();
+    image.dump(OFNAME);
     cout << dec << "split: " << split << "\thSplit: " << hSplit << "\tvSplit: " << vSplit << "\tbitDepth: " << bitDepth << endl;
 
     return 0;

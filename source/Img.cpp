@@ -1,10 +1,14 @@
 #include "Img.hpp"
 #include "cyntax.hpp"
 #include "errors.hpp"
+#include "bitmasks.hpp"
+#include <cstdio>
 #include <cstring>
 #include <fstream>
+#include <ios>
 #include <iostream>
 #include <iterator>
+#include <string>
 #include <type_traits>
 
 typedef u16 ChunkLine[LINE_SIZE];
@@ -15,7 +19,17 @@ typedef u16 Chunk[CHUNK_SIZE];
 #define CLEAR(CODE) Meta.error &= (~(CODE))
 
 #define HASHTAB_MASK    (MAX_HASHTAB_SIZE-1)
-#define COLORHASH(color) ((u16)( (GREEN(color) ^ (BLUE(color)<<3) ^ ((RED(color)<<6) | (RED(color)>>3)))&HASHTAB_MASK ))
+#define COLORHASH(color) ((u16)( (RED(color) ^ (GREEN(color)<<3) ^ ((BLUE(color)<<6) | (BLUE(color)>>3)))&HASHTAB_MASK ))
+
+#define DUMP_DEFINE(var_name, value)   "#define " << base_name << "_" << #var_name  << " " << (value) << endl
+#define CEIL4(num) ((num)+(((num%4)+4)%4))
+
+#define TRISWAP(a,b,tmp,size)\
+{\
+    memcpy(tmp, a, size);\
+    memcpy(a, b, size);\
+    memcpy(b, tmp, size);\
+}
 
 u16 Img::colorHash(u16 color){
     u16 ret =  GREEN(color);
@@ -28,10 +42,11 @@ Img::Img(string fileName) {
     Meta.file_name = fileName;
     Meta.index = false;
     Meta.split = false;
+    Meta.vSplit = 0;
+    Meta.hSplit = 0;
     Meta.error = CANVAS_ALLOC_ERROR | HASHTAB_ALLOC_ERROR;
-    Palette.curr = 1;
-    Palette.entries[0] = 0x7fff;
     Palette.size = 0;
+    Palette.curr = 0;
     HashTab.collisions = 0;
     HashTab.size = MAX_HASHTAB_SIZE;
 
@@ -102,6 +117,15 @@ Img::Img(string fileName) {
     if (!HashTab.entries) {
         ERROR(HASHTAB_ALLOC_ERROR);
     } CLEAR(HASHTAB_ALLOC_ERROR);
+
+    if(Meta.bottom_up && Canvas.height>1){  // if canvas.height == 1 swap line with itself
+        u16* scanline = new u16[Canvas.width];
+        for(uint i=0; i<(Canvas.size>>1); i+=Canvas.width){
+            TRISWAP(&Canvas.entries[i], &Canvas.entries[Canvas.size-Canvas.width-i], scanline, (Canvas.width<<1));
+        }
+        delete[] scanline;
+        Meta.bottom_up = false;
+    }
 }
 
 Img::~Img(){
@@ -127,6 +151,11 @@ u16 Img::probeHash(u16 color){
 
 void Img::index(uint palette_size){
     if(Meta.index) return;
+    if     (palette_size == SMALL_PALETTE) Meta.bit_depth = 4;
+    else if(palette_size == FULL_PALETTE)  Meta.bit_depth = 8;
+    else return;
+    Palette.curr = 1;
+    Palette.entries[0] = 0x7fff;
     Palette.size = palette_size;
     memset(HashTab.entries, EMPTY, HashTab.size);
     for (uint i=0; i<Canvas.size; i++){
@@ -153,7 +182,7 @@ void Img::split(uint width, uint height){
         Meta.error = SPLIT_ALIGN_ERROR;
         return;
     }
-    
+
     // phase 1: convert from array of pixels to array of chunks
     uint buff_pos = 0;
     uint line_buff_width = Canvas.width>>LINE_SHIFT;
@@ -181,7 +210,47 @@ void Img::split(uint width, uint height){
                     memcpy(&chunk_canvas[buff_pos], &chunk_buffer[i+j+r+c], sizeof(Chunk));
 
     delete[] line_buffer;
+    Meta.hSplit = width;
+    Meta.vSplit = height;
     Meta.split = true;
+}
+
+void Img::dump(string fileName){
+    if(fileName.find(' ') != string::npos){
+        Meta.error |= OUTPUT_FILENAME_ERROR;
+        return;
+    }
+    ofstream output_file(fileName);
+    string base_name = fileName.substr(fileName.find_last_of("/")+1);
+           base_name = base_name.substr(0, base_name.find_first_of("."));
+    if(!output_file.good()){return;}
+    uint canvas_byte_size = ((Meta.bit_depth == 16) ? (Canvas.size<<1) : (Meta.bit_depth == 8) ? (Canvas.size) : (Canvas.size>>1));
+    output_file <<  DUMP_DEFINE(canvas_entries_size, Canvas.size) <<
+                    DUMP_DEFINE(canvas_byte_size, canvas_byte_size) <<
+                    DUMP_DEFINE(canvas_word_size, CEIL4(canvas_byte_size)>>2) <<
+                    DUMP_DEFINE(bit_depth, Meta.bit_depth) <<
+                    DUMP_DEFINE(index, Meta.index) <<
+                    DUMP_DEFINE(palette_entries_size, Palette.curr) <<
+                    DUMP_DEFINE(palette_byte_size, Palette.curr<<1) <<
+                    DUMP_DEFINE(palette_word_size, CEIL4(Palette.curr<<1)>>2) <<
+                    DUMP_DEFINE(split, Meta.split) <<
+                    DUMP_DEFINE(hSplit, Meta.hSplit) <<
+                    DUMP_DEFINE(vSplit, Meta.vSplit);
+    if(Meta.index) {
+        output_file << "unsigned int un_minimo_di_header [] = { " << hex;
+        // dump palette
+        sint palette_ceil = (CEIL4(Palette.curr<<1)>>2);
+        for(u16 i=0; i<palette_ceil; i++){
+            uint pair = (Palette.entries[i<<1]);
+            pair |= ((i<<1) > Palette.curr) ? 0x00000000 : (Palette.entries[(i<<1)+1]<<16);
+            output_file << "0x" << pair << ((i+1 != palette_ceil) ? ", " : "\n");
+        }
+        output_file << "};";
+    }
+    for(uint i=0; i<(CEIL4(canvas_byte_size)>>2); i++){
+
+    }
+    // dump canvas
 }
 
 void Img::print(){
@@ -195,6 +264,8 @@ void Img::print(){
     cout << "\tdirection: "<< (Meta.bottom_up ? "bottom up" : "top down") << endl;
     cout << "\theader size: " << Meta.info_header_size << endl;
     cout << "\tpalette size: " << Palette.size << endl;
+    cout << "\tpalette entries used: " << Palette.curr << endl;
+    cout << "\tpalette entries avail: " << paletteAvail() << endl;
     cout << "\thashtab size: " << HashTab.size << endl;
     cout << "\thashtab collisions: " << HashTab.collisions << endl;
     cout << "\terror: 0x" << hex << Meta.error << endl << endl;

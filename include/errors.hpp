@@ -32,4 +32,6 @@
 #define ILLEGAL_SPLIT_REQ_ERROR     SET(12)
 // impossible to split image with the requested size preserving 8*8 chunks
 #define SPLIT_ALIGN_ERROR           SET(13)
+// output filename error (spaces not allowed)
+#define OUTPUT_FILENAME_ERROR       SET(14)
 #endif

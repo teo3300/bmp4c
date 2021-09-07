@@ -28,7 +28,6 @@ class Img {
         sint height;
         uint size;
         u16* entries;
-        u8*  index;
     }Canvas;
     struct{
         uint error;
@@ -38,8 +37,10 @@ class Img {
         u16  bit_depth;
         bool bottom_up;
         uint compression;
-        uint index;
+        bool index;
         bool split;
+        uint vSplit;
+        uint hSplit;
         uint bit_index;
         string file_name;
     }Meta;
@@ -50,6 +51,7 @@ public:
     ~Img();
     void index(uint palette_size);
     void split(uint width, uint height);
+    void dump(string fileName);
     void print();
     inline u16 paletteEntry(uint x) {return Palette.entries[x];};
     inline u16 pixel(uint i){return Canvas.entries[i];}
@@ -58,8 +60,6 @@ public:
     inline u16 blue(uint i){return BLUE(Canvas.entries[i]);}
     inline bool transparent(uint i){return !(Canvas.entries[i] & ALPHA_MASK);}
     inline uint size() {return Canvas.size;};
-    inline bool topDown() {return !Meta.bottom_up;};
-    inline bool bottomUp() {return Meta.bottom_up;};
     inline uint paletteMaxSize() {return Palette.size;};
     inline uint paletteSize() {return Palette.curr;};
     inline uint paletteAvail() {return Palette.size - Palette.curr;};
