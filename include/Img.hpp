@@ -42,7 +42,7 @@ class Img {
         uint vSplit;
         uint hSplit;
         uint bit_index;
-        string file_name;
+        string name;
     }Meta;
     u16 probeHash(u16 color);
     u16 colorHash(u16 color);

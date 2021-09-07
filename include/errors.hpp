@@ -5,7 +5,7 @@
 #define SET(n) ((1<<(n)))
 
 // error opening file
-#define OPEN_IMAGE_ERROR            SET(0)
+#define OPEN_IMAGE_ERROR            SET(0)  ////
 // no data
 #define NO_DATA_ERROR               SET(1)
 // magic bytes not matching
@@ -13,7 +13,7 @@
 // error reading bitmapfileheader
 #define BMFH_ERROR                  SET(3)
 // bitdepth is not 16bpp
-#define BITDEPTH_ERROR              SET(4)
+#define BITDEPTH_ERROR              SET(4)  ////
 // bitmap compression not supported
 #define COMPRESSION_ERROR           SET(5)
 // error parsing bitmapinfoheader
@@ -21,7 +21,7 @@
 // bad canvas alloc
 #define CANVAS_ALLOC_ERROR          SET(7)
 // bad hashtab alloc (colors)
-#define HASHTAB_ALLOC_ERROR         SET(8)
+#define HASHTAB_ALLOC_ERROR         SET(8)  ////
 // incompatible img size with data file size
 #define SIZE_ERROR                  SET(9)
 // error while parsing image data
@@ -34,4 +34,6 @@
 #define SPLIT_ALIGN_ERROR           SET(13)
 // output filename error (spaces not allowed)
 #define OUTPUT_FILENAME_ERROR       SET(14)
+// error opening output
+#define OUTPUT_EROOR                SET(15)
 #endif

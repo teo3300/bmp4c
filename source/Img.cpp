@@ -21,7 +21,7 @@ typedef u16 Chunk[CHUNK_SIZE];
 #define HASHTAB_MASK    (MAX_HASHTAB_SIZE-1)
 #define COLORHASH(color) ((u16)( (RED(color) ^ (GREEN(color)<<3) ^ ((BLUE(color)<<6) | (BLUE(color)>>3)))&HASHTAB_MASK ))
 
-#define DUMP_DEFINE(var_name, value)   "#define " << base_name << "_" << #var_name  << " " << (value) << endl
+#define DUMP_DEFINE(var_name, value)   "#define " << Meta.name << "_" << #var_name  << " " << (value) << endl
 #define CEIL4(num) ((num)+(((num%4)+4)%4))
 
 #define TRISWAP(a,b,tmp,size)\
@@ -39,7 +39,8 @@ u16 Img::colorHash(u16 color){
 }
 
 Img::Img(string fileName) {
-    Meta.file_name = fileName;
+    Meta.name = fileName.substr(fileName.find_last_of("/")+1);
+    Meta.name = Meta.name.substr(0, Meta.name.find_first_of("."));
     Meta.index = false;
     Meta.split = false;
     Meta.vSplit = 0;
@@ -216,18 +217,17 @@ void Img::split(uint width, uint height){
 }
 
 void Img::dump(string fileName){
-    if(fileName.find(' ') != string::npos){
-        Meta.error |= OUTPUT_FILENAME_ERROR;
-        return;
-    }
+    if(fileName.find(' ') != string::npos) {Meta.error |= OUTPUT_FILENAME_ERROR;return;}
+    string full_path = fileName.substr(0, fileName.find_last_of("."));
+    string base_name = full_path.substr(full_path.find_last_of("/")+1);
     ofstream output_file(fileName);
-    string base_name = fileName.substr(fileName.find_last_of("/")+1);
-           base_name = base_name.substr(0, base_name.find_first_of("."));
-    if(!output_file.good()){return;}
-    uint canvas_byte_size = ((Meta.bit_depth == 16) ? (Canvas.size<<1) : (Meta.bit_depth == 8) ? (Canvas.size) : (Canvas.size>>1));
-    output_file <<  DUMP_DEFINE(canvas_entries_size, Canvas.size) <<
+    ofstream output_header(full_path + ".h");
+    if(!output_file.good()){Meta.error |= OUTPUT_EROOR; return;}
+    if(!output_header.good()){Meta.error |= OUTPUT_EROOR; return;}
+    const uint canvas_byte_size = ((Meta.bit_depth == 16) ? (Canvas.size<<1) : ((Meta.bit_depth == 8) ? (Canvas.size) : (Canvas.size>>1)));
+    output_header <<DUMP_DEFINE(canvas_entries_size, Canvas.size) <<
                     DUMP_DEFINE(canvas_byte_size, canvas_byte_size) <<
-                    DUMP_DEFINE(canvas_word_size, CEIL4(canvas_byte_size)>>2) <<
+                    DUMP_DEFINE(canvas_word_size, CEIL4((canvas_byte_size))>>2) <<
                     DUMP_DEFINE(bit_depth, Meta.bit_depth) <<
                     DUMP_DEFINE(index, Meta.index) <<
                     DUMP_DEFINE(palette_entries_size, Palette.curr) <<
@@ -236,25 +236,63 @@ void Img::dump(string fileName){
                     DUMP_DEFINE(split, Meta.split) <<
                     DUMP_DEFINE(hSplit, Meta.hSplit) <<
                     DUMP_DEFINE(vSplit, Meta.vSplit);
+    uint arr_len = CEIL4(Palette.curr<<1)>>2;
     if(Meta.index) {
-        output_file << "unsigned int un_minimo_di_header [] = { " << hex;
+        output_file << "#include \"" << base_name << ".h\"" << endl;
+        output_file << "const unsigned int " << base_name << "_palette_data [" << dec << arr_len << "] = { " << endl << hex;
         // dump palette
-        sint palette_ceil = (CEIL4(Palette.curr<<1)>>2);
-        for(u16 i=0; i<palette_ceil; i++){
-            uint pair = (Palette.entries[i<<1]);
-            pair |= ((i<<1) > Palette.curr) ? 0x00000000 : (Palette.entries[(i<<1)+1]<<16);
-            output_file << "0x" << pair << ((i+1 != palette_ceil) ? ", " : "\n");
+        for(uint i=0; i<Palette.curr; i+=2){
+            uint pair = Palette.entries[i];
+            char sep = ',';
+            if(i+1 < Palette.curr){
+                pair |= (Palette.entries[i+1] << 16);
+            } else sep = '\n';
+            output_file << hex << "0x" << pair << sep;
         }
-        output_file << "};";
+        output_file << "};" << endl;
     }
-    for(uint i=0; i<(CEIL4(canvas_byte_size)>>2); i++){
-
+    arr_len = CEIL4((canvas_byte_size))>>2;
+    if(Meta.bit_depth == 16){
+        output_file << "const unsigned int " << base_name << "_canvas_data [" << dec << arr_len << "] = { " << endl << hex;
+        for(uint i=0; i<Canvas.size; i+=2){
+            uint pair = Canvas.entries[i];
+            char sep = ',';
+            if(i+1 < Canvas.size){
+                pair |= Canvas.entries[i+1] << 16;
+            } else sep = '\n';
+            output_file << hex << "0x" << pair << sep;
+        }
     }
+    else if(Meta.bit_depth == 8){
+        output_file << "const unsigned int " << base_name << "_canvas_data [" << dec << arr_len << "] = { " << endl << hex;
+        for(uint i=0; i<Canvas.size; i+=4){
+            uint pair = Canvas.entries[i];
+                pair |= Canvas.entries[i+1]<<8;
+                pair |= Canvas.entries[i+2]<<16;
+                pair |= Canvas.entries[i+3]<<24;
+            output_file << hex << "0x" << pair << ((i+4 < Canvas.size) ? ", " : "\n");
+        }
+    }
+    else if(Meta.bit_depth == 4){
+        output_file << "const unsigned int " << base_name << "_canvas_data [" << dec << arr_len << "] = { " << endl << hex;
+        for(uint i=0; i<Canvas.size; i+=8){
+            uint pair = Canvas.entries[i];
+                pair |= Canvas.entries[i+1]<<4;
+                pair |= Canvas.entries[i+2]<<8;
+                pair |= Canvas.entries[i+3]<<12;
+                pair |= Canvas.entries[i+4]<<16;
+                pair |= Canvas.entries[i+5]<<20;
+                pair |= Canvas.entries[i+6]<<24;
+                pair |= Canvas.entries[i+7]<<28;
+            output_file << hex << "0x" << pair << ((i+8 < Canvas.size) ? ", " : "\n");
+        }
+    }
+    output_file << "};" << endl;
     // dump canvas
 }
 
 void Img::print(){
-    cout << Meta.file_name << ": " << endl;
+    cout << Meta.name << ": " << endl;
     cout << "\tpixel size: " << dec << Canvas.width << "*" << Canvas.height << " - " << Canvas.size << endl;
     cout << "\timage size: " << Meta.img_size << endl;
     cout << "\tdata offset: 0x" << hex << Canvas.offset << dec << endl;

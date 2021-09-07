@@ -58,23 +58,6 @@ int main(int argc, char* argv[]){
                 cerr << "ERROR: <" << IFNAME << "> does not exists, use 'bmp4c' or 'bmp4c h' to get help" << endl;
                 return 1;
             }
-            if(file_exists(OFNAME)){
-                string backup_file_name = string(OFNAME);
-                if(backup_file_name.back() == '/'){
-                    cout << "ERROR: output file <" << OFNAME << "> is a directory" << endl;
-                    return 1;
-                }
-                backup_file_name += ".bak";
-                cout << "WARNING: <" << OFNAME << "> already exists, copying it to <" << OFNAME << ".bak>" << endl;
-                ifstream src(OFNAME, ios::binary);
-                if(!src.good()) {return 1; cerr << "ERROR: could not create backup file" << endl;}
-                ofstream dst(backup_file_name, ios::binary);
-                if(!dst.good()) {return 1; cerr << "ERROR: could not create backup file" << endl;}
-                dst << src.rdbuf();
-            } if (!ofstream(OFNAME).good()){
-                cout << "ERROR: unable to open file <" << OFNAME << ">" << endl;
-                return 1;
-            }
             break;
         default:
             printHelper();
