@@ -20,6 +20,7 @@ typedef u16 Chunk[CHUNK_SIZE];
 
 #define HASHTAB_MASK    (MAX_HASHTAB_SIZE-1)
 #define COLORHASH(color) ((u16)( (RED(color) ^ (GREEN(color)<<3) ^ ((BLUE(color)<<6) | (BLUE(color)>>3)))&HASHTAB_MASK ))
+#define RGB2BGR(color)   ((color & (~BITMASK(15))) | (RED(color)) | (GREEN(color)<<5) | (BLUE(color)<<10))
 
 #define DUMP_DEFINE(var_name, value)   "#define " << base_name << "_" << #var_name  << " " << (value) << endl
 #define DUMP_CHECK(directive, name)    "#" << #directive << " " << name << endl
@@ -118,6 +119,8 @@ Img::Img(string fileName) {
 
     // Done reading file
     input_file.close();
+
+    for(uint i=0; i<Canvas.size; i++) Canvas.entries[i] = (u16)RGB2BGR(Canvas.entries[i]);
 
     HashTab.entries = new u8[HashTab.size];
     if (!HashTab.entries) {
@@ -238,7 +241,7 @@ void Img::dump(string fileName){
     uint arr_len = CEIL4(Palette.curr<<1)>>2;
     output_file << "#include \"" << base_name << ".h\"" << endl;
     if(Meta.index) {
-        output_header << endl <<"extern const unsigned int" << base_name << "_palette_data [" << arr_len << "];";
+        output_header << endl <<"extern const unsigned int " << base_name << "_palette_data [" << arr_len << "];";
         output_file << endl << "const unsigned int " << base_name << "_palette_data [" << dec << arr_len << "] __attribute__ ((aligned (4))) = { " << endl << hex;
         // dump palette
         for(uint i=0; i<Palette.curr; i+=2){
@@ -252,7 +255,7 @@ void Img::dump(string fileName){
         output_file << "};" << endl;
     }
     arr_len = canvas_byte_size>>2;
-    output_header << endl << "extern const unsigned int" << base_name << "_canvas_data [" << arr_len << "];";
+    output_header << endl << "extern const unsigned int " << base_name << "_canvas_data [" << arr_len << "];";
     output_header << endl << endl << "#endif" << endl; output_header.close();
     output_file << endl << "const unsigned int " << base_name << "_canvas_data [" << dec << arr_len << "] __attribute__ ((aligned (4))) = { " << endl << hex;
     if(Meta.bit_depth == 16){
@@ -308,7 +311,6 @@ void Img::print(){
     cout << "\thashtab collisions: " << HashTab.collisions << endl;
     cout << "\terror: 0x" << hex << Meta.error << endl << endl;
 }
-
 
 u16 askHash(u16 color){
     return COLORHASH(color);
