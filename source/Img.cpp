@@ -22,6 +22,7 @@ typedef u16 Chunk[CHUNK_SIZE];
 #define COLORHASH(color) ((u16)( (RED(color) ^ (GREEN(color)<<3) ^ ((BLUE(color)<<6) | (BLUE(color)>>3)))&HASHTAB_MASK ))
 
 #define DUMP_DEFINE(var_name, value)   "#define " << base_name << "_" << #var_name  << " " << (value) << endl
+#define DUMP_CHECK(directive, name)    "#" << #directive << " " << name << endl
 #define CEIL4(num) ((num)+(((num%4)+4)%4))
 
 #define TRISWAP(a,b,tmp,size)\
@@ -220,7 +221,9 @@ void Img::dump(string fileName){
     if(!output_file.good()){Meta.error |= OUTPUT_EROOR; return;}
     if(!output_header.good()){Meta.error |= OUTPUT_EROOR; return;}
     const uint canvas_byte_size = ((Meta.bit_depth == 16) ? (Canvas.size<<1) : ((Meta.bit_depth == 8) ? (Canvas.size) : (Canvas.size>>1)));
-    output_header <<DUMP_DEFINE(canvas_entries_size, Canvas.size) <<
+    output_header <<DUMP_CHECK(ifndef, base_name + "_h") <<
+                    DUMP_CHECK(define, base_name + "_h") << endl <<
+                    DUMP_DEFINE(canvas_entries_size, Canvas.size) <<
                     DUMP_DEFINE(canvas_byte_size, canvas_byte_size) <<
                     DUMP_DEFINE(canvas_word_size, CEIL4((canvas_byte_size))>>2) <<
                     DUMP_DEFINE(bit_depth, Meta.bit_depth) <<
@@ -231,6 +234,7 @@ void Img::dump(string fileName){
                     DUMP_DEFINE(split, Meta.split) <<
                     DUMP_DEFINE(hSplit, Meta.hSplit) <<
                     DUMP_DEFINE(vSplit, Meta.vSplit);
+    
     uint arr_len = CEIL4(Palette.curr<<1)>>2;
     output_file << "#include \"" << base_name << ".h\"" << endl;
     if(Meta.index) {
@@ -249,6 +253,7 @@ void Img::dump(string fileName){
     }
     arr_len = canvas_byte_size>>2;
     output_header << endl << "extern const unsigned int" << base_name << "_canvas_data [" << arr_len << "];";
+    output_header << endl << endl << "#endif" << endl; output_header.close();
     output_file << endl << "const unsigned int " << base_name << "_canvas_data [" << dec << arr_len << "] __attribute__ ((aligned (4))) = { " << endl << hex;
     if(Meta.bit_depth == 16){
         for(uint i=0; i<Canvas.size; i+=2){
@@ -283,7 +288,7 @@ void Img::dump(string fileName){
         }
     }
     output_file << "};" << endl;
-    // dump canvas
+    output_file.close();
 }
 
 void Img::print(){
