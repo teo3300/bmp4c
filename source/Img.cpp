@@ -21,7 +21,7 @@ typedef u16 Chunk[CHUNK_SIZE];
 #define HASHTAB_MASK    (MAX_HASHTAB_SIZE-1)
 #define COLORHASH(color) ((u16)( (RED(color) ^ (GREEN(color)<<3) ^ ((BLUE(color)<<6) | (BLUE(color)>>3)))&HASHTAB_MASK ))
 
-#define DUMP_DEFINE(var_name, value)   "#define " << Meta.name << "_" << #var_name  << " " << (value) << endl
+#define DUMP_DEFINE(var_name, value)   "#define " << base_name << "_" << #var_name  << " " << (value) << endl
 #define CEIL4(num) ((num)+(((num%4)+4)%4))
 
 #define TRISWAP(a,b,tmp,size)\

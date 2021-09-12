@@ -74,9 +74,9 @@ int main(int argc, char* argv[]){
     if(image.error()) {cerr << "Error occurred: 0x" << hex << image.error() << endl; return 1;}
     if(split) image.split(hSplit, vSplit);
     if(image.error()) {cerr << "Error occurred: 0x" << hex << image.error() << endl; return 1;}
-    image.print();
+    //image.print();
     image.dump(OFNAME);
-    cout << dec << "split: " << split << "\thSplit: " << hSplit << "\tvSplit: " << vSplit << "\tbitDepth: " << bitDepth << endl;
+    //cout << dec << "split: " << split << "\thSplit: " << hSplit << "\tvSplit: " << vSplit << "\tbitDepth: " << bitDepth << endl;
 
     return 0;
 }
