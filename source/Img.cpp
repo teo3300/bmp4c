@@ -108,7 +108,11 @@ Img::Img(string fileName) {
     } CLEAR(CANVAS_ALLOC_ERROR);
 
     input_file.seekg((sint)Canvas.offset);
-    input_file.read((char*)Canvas.entries, Meta.img_size); //TODO: check for endian
+    if(Meta.bottom_up){
+        for(sint i=Canvas.size-Canvas.width; i>(-1); i-= Canvas.width){
+            input_file.read((char*)&Canvas.entries[i], Canvas.width<<1);
+        }
+    } else input_file.read((char*)Canvas.entries, Meta.img_size); //TODO: check for endian
     if(!input_file.good()) {ERROR(PARSING_DATA_ERROR);};
 
     // Done reading file
@@ -118,15 +122,6 @@ Img::Img(string fileName) {
     if (!HashTab.entries) {
         ERROR(HASHTAB_ALLOC_ERROR);
     } CLEAR(HASHTAB_ALLOC_ERROR);
-
-    if(Meta.bottom_up && Canvas.height>1){  // if canvas.height == 1 swap line with itself
-        u16* scanline = new u16[Canvas.width];
-        for(uint i=0; i<(Canvas.size>>1); i+=Canvas.width){
-            TRISWAP(&Canvas.entries[i], &Canvas.entries[Canvas.size-Canvas.width-i], scanline, (Canvas.width<<1));
-        }
-        delete[] scanline;
-        Meta.bottom_up = false;
-    }
 }
 
 Img::~Img(){
@@ -239,21 +234,22 @@ void Img::dump(string fileName){
     uint arr_len = CEIL4(Palette.curr<<1)>>2;
     if(Meta.index) {
         output_file << "#include \"" << base_name << ".h\"" << endl;
-        output_file << "const unsigned int " << base_name << "_palette_data [" << dec << arr_len << "] = { " << endl << hex;
+        output_file << endl << "const unsigned int " << base_name << "_palette_data [" << dec << arr_len << "] __attribute__ ((aligned (4))) = { " << endl << hex;
         // dump palette
         for(uint i=0; i<Palette.curr; i+=2){
             uint pair = Palette.entries[i];
             char sep = ',';
             if(i+1 < Palette.curr){
                 pair |= (Palette.entries[i+1] << 16);
-            } else sep = '\n';
-            output_file << hex << "0x" << pair << sep;
+            }
+            if(i == (uint)(Palette.curr -1) || i == (uint)(Palette.curr -2)) sep = '\n';
+            output_file << hex << "0x" << pair << sep << " ";
         }
         output_file << "};" << endl;
     }
-    arr_len = CEIL4((canvas_byte_size))>>2;
+    arr_len = canvas_byte_size>>2;
+    output_file << "const unsigned int " << base_name << "_canvas_data [" << dec << arr_len << "] __attribute__ ((aligned (4))) = { " << endl << hex;
     if(Meta.bit_depth == 16){
-        output_file << "const unsigned int " << base_name << "_canvas_data [" << dec << arr_len << "] = { " << endl << hex;
         for(uint i=0; i<Canvas.size; i+=2){
             uint pair = Canvas.entries[i];
             char sep = ',';
@@ -264,7 +260,6 @@ void Img::dump(string fileName){
         }
     }
     else if(Meta.bit_depth == 8){
-        output_file << "const unsigned int " << base_name << "_canvas_data [" << dec << arr_len << "] = { " << endl << hex;
         for(uint i=0; i<Canvas.size; i+=4){
             uint pair = Canvas.entries[i];
                 pair |= Canvas.entries[i+1]<<8;
@@ -274,7 +269,6 @@ void Img::dump(string fileName){
         }
     }
     else if(Meta.bit_depth == 4){
-        output_file << "const unsigned int " << base_name << "_canvas_data [" << dec << arr_len << "] = { " << endl << hex;
         for(uint i=0; i<Canvas.size; i+=8){
             uint pair = Canvas.entries[i];
                 pair |= Canvas.entries[i+1]<<4;
