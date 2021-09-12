@@ -232,8 +232,9 @@ void Img::dump(string fileName){
                     DUMP_DEFINE(hSplit, Meta.hSplit) <<
                     DUMP_DEFINE(vSplit, Meta.vSplit);
     uint arr_len = CEIL4(Palette.curr<<1)>>2;
+    output_file << "#include \"" << base_name << ".h\"" << endl;
     if(Meta.index) {
-        output_file << "#include \"" << base_name << ".h\"" << endl;
+        output_header << endl <<"extern const unsigned int" << base_name << "_palette_data [" << arr_len << "];";
         output_file << endl << "const unsigned int " << base_name << "_palette_data [" << dec << arr_len << "] __attribute__ ((aligned (4))) = { " << endl << hex;
         // dump palette
         for(uint i=0; i<Palette.curr; i+=2){
@@ -241,22 +242,22 @@ void Img::dump(string fileName){
             char sep = ',';
             if(i+1 < Palette.curr){
                 pair |= (Palette.entries[i+1] << 16);
-            }
-            if(i == (uint)(Palette.curr -1) || i == (uint)(Palette.curr -2)) sep = '\n';
-            output_file << hex << "0x" << pair << sep << " ";
+            } if(i == (uint)(Palette.curr -1) || i == (uint)(Palette.curr -2)) sep = '\n';
+            output_file << hex << " 0x" << pair << sep;
         }
         output_file << "};" << endl;
     }
     arr_len = canvas_byte_size>>2;
-    output_file << "const unsigned int " << base_name << "_canvas_data [" << dec << arr_len << "] __attribute__ ((aligned (4))) = { " << endl << hex;
+    output_header << endl << "extern const unsigned int" << base_name << "_canvas_data [" << arr_len << "];";
+    output_file << endl << "const unsigned int " << base_name << "_canvas_data [" << dec << arr_len << "] __attribute__ ((aligned (4))) = { " << endl << hex;
     if(Meta.bit_depth == 16){
         for(uint i=0; i<Canvas.size; i+=2){
             uint pair = Canvas.entries[i];
             char sep = ',';
             if(i+1 < Canvas.size){
                 pair |= Canvas.entries[i+1] << 16;
-            } else sep = '\n';
-            output_file << hex << "0x" << pair << sep;
+            } if(i == (uint)(Canvas.size -1) || i == (uint)(Canvas.size -2)) sep = '\n';
+            output_file << hex << " 0x" << pair << sep;
         }
     }
     else if(Meta.bit_depth == 8){
