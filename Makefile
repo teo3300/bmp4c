@@ -1,4 +1,4 @@
-FLAGS = -Wall -Werror -Wpedantic -Wconversion -O2
+FLAGS = -Wall -Werror -Wpedantic -Wconversion -O2 #-DDebug
 INCLUDES = include
 SOURCES = source
 BINARIES = bin

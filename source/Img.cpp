@@ -11,6 +11,8 @@
 #include <string>
 #include <type_traits>
 
+#include "debug.h"
+
 typedef u16 ChunkLine[LINE_SIZE];
 typedef u16 Chunk[CHUNK_SIZE];
 
@@ -175,10 +177,15 @@ void Img::index(uint palette_size){
 }
 
 void Img::split(uint width, uint height){
-    if(Meta.split) return; 
+    if(Meta.split) return;
+    LOG(Img not splitted);
+    DEBUG(width); DEBUG(height);
     if(!height) {if(!width) height = width = 1; else height = width;}
     if(!width) {Meta.error = ILLEGAL_SPLIT_REQ_ERROR; return;}
-    if((Canvas.height % (width<<3)) || (Canvas.height % (height<<3))){
+    LOG(Processed split size);
+    DEBUG(width); DEBUG(height);
+    DEBUG(Canvas.width); DEBUG(Canvas.height);
+    if((Canvas.width % (width<<3)) || (Canvas.height % (height<<3))){
         Meta.error = SPLIT_ALIGN_ERROR;
         return;
     }

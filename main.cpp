@@ -5,6 +5,8 @@
 #include <fstream>
 #include <string>
 
+#include "debug.h"
+
 using namespace std;
 
 #define HELP    argv[1]
@@ -31,12 +33,14 @@ int main(int argc, char* argv[]){
                 cerr << "ERROR: vSplit too big, maximum is " << MAX_VSPLIT << endl;
                 return 1;
             }
+            DEBUG(vSplit);
         case 6:
             hSplit = atoi(H_SPLIT);
             if(hSplit > MAX_HSPLIT){
                 cerr << "ERROR: hSplit too big, maximum is " << MAX_VSPLIT << endl;
                 return 1;
             }
+            DEBUG(hSplit);
             if(vSplit && !hSplit){
                 cerr << "ERROR: hSplit must be non-zero" << endl;
                 return 1;
@@ -47,12 +51,14 @@ int main(int argc, char* argv[]){
                 return 1;
             }
             split=true;
+            DEBUG(split);
         case 4:
             bitDepth = atoi(INDEX_FORM);
             if(bitDepth != 4 && bitDepth!= 8 && bitDepth!= 16){
                 cout << "ERROR: impossible to generate an image with a bitdepth of " << bitDepth << endl;
                 return 1;
             }
+            DEBUG(bitDepth);
         case 3:
             if(!file_exists(IFNAME)){
                 cerr << "ERROR: <" << IFNAME << "> does not exists, use 'bmp4c' or 'bmp4c h' to get help" << endl;
@@ -63,19 +69,33 @@ int main(int argc, char* argv[]){
             printHelper();
             return 1;
     }
-
+    LOG(Loading image...);
     Img image(IFNAME);
-    if(image.error()) {cerr << "Error occurred: 0x" << hex << image.error() << endl; return 1;}
+    if(image.error()) {cerr << "Error occurred: 0x" << hex << image.error() << endl; return 1;}else{
+        LOG(Image loaded!);
+    }
     if(bitDepth == 8){
+        LOG(Indexing image with 8bpp ...);
         image.index(FULL_PALETTE);
     } else if (bitDepth == 4){
+        LOG(Indexing image with 8bpp ...);
         image.index(SMALL_PALETTE);
     }
-    if(image.error()) {cerr << "Error occurred: 0x" << hex << image.error() << endl; return 1;}
-    if(split) image.split(hSplit, vSplit);
-    if(image.error()) {cerr << "Error occurred: 0x" << hex << image.error() << endl; return 1;}
+    if(image.error()) {cerr << "Error occurred: 0x" << hex << image.error() << endl; return 1;}else{
+        LOG(Image indexed!);
+    }
+    if(split){
+        LOG(Splitting image...);
+        image.split(hSplit, vSplit);
+    }
+    if(image.error()) {cerr << "Error occurred: 0x" << hex << image.error() << endl; return 1;}else{
+        LOG(Image splitted!);
+    }
     //image.print();
+
+    LOG(Dumping image...);
     image.dump(OFNAME);
+    LOG(Image dumped!);
     //cout << dec << "split: " << split << "\thSplit: " << hSplit << "\tvSplit: " << vSplit << "\tbitDepth: " << bitDepth << endl;
 
     return 0;
